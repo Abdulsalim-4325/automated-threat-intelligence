@@ -1,0 +1,14 @@
+# Sensitive configurations
+.env
+secret_keys.py
+config.json
+
+# Python specific (if using Python)
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Local databases/logs
+*.log
+*.db
