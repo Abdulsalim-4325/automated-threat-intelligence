@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, List
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Dict, Any, List
 from datetime import datetime
 
 
@@ -11,8 +11,8 @@ class IndicatorBase(BaseModel):
     sighting_count: int = Field(default=1, ge=1)
     sources: List[str] = Field(default_factory=list)
     
-    class Config:
-        from_attributes = True  # SQLAlchemy ORM mode
+    # Pydantic V2 config syntax
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IndicatorCreate(IndicatorBase):
@@ -27,13 +27,10 @@ class IndicatorResponse(IndicatorBase):
     last_seen: datetime
     payload: Dict[str, Any] = Field(..., description="Full STIX 2.1 payload")
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
-# Quick test if run directly
 if __name__ == "__main__":
-    # Test data
     test_data = {
         "id": 1,
         "ioc_type": "ipv4-addr", 
@@ -48,4 +45,4 @@ if __name__ == "__main__":
     
     indicator = IndicatorResponse(**test_data)
     print("✅ Schema works!")
-    print(indicator.json(indent=2))
+    print(indicator.model_dump_json(indent=2))
