@@ -4,6 +4,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Automated Threat Intelligence & STIX 2.1 Engine"
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = "INFO"
+    DISCORD_WEBHOOK_URL: Optional[str] = None
+    SLACK_WEBHOOK_URL: Optional[str] = None
 
     # Database
     DATABASE_URL: str
