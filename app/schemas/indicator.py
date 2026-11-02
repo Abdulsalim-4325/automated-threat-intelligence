@@ -30,7 +30,9 @@ class IndicatorResponse(IndicatorBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+# Quick test if run directly
 if __name__ == "__main__":
+    # Test data
     test_data = {
         "id": 1,
         "ioc_type": "ipv4-addr", 
@@ -45,4 +47,5 @@ if __name__ == "__main__":
     
     indicator = IndicatorResponse(**test_data)
     print("✅ Schema works!")
+    # Fixed: Use model_dump_json instead of deprecated json method
     print(indicator.model_dump_json(indent=2))
