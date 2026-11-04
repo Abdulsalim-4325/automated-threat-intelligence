@@ -4,15 +4,13 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Automated Threat Intelligence & STIX 2.1 Engine"
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = "INFO"
-    DISCORD_WEBHOOK_URL: Optional[str] = None
-    SLACK_WEBHOOK_URL: Optional[str] = None
 
     # Database
     DATABASE_URL: str
 
-    # Redis
+    # Redis Cache & Broker
     REDIS_URL: str
-    CACHE_TTL_SECONDS: int = 900
+    CACHE_TTL_SECONDS: int = 900  # Added missing attribute
 
     # API Keys
     OTX_API_KEY: str
