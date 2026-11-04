@@ -1,75 +1,41 @@
-import redis.asyncio as redis
 import json
-from typing import Any, Optional
+import redis.asyncio as redis
+from typing import Optional, Dict, Any
 from app.core.config import settings
 
 class CacheService:
+    """Async Redis cache for STIX indicators."""
+    
     def __init__(self):
-        self.redis_url = settings.REDIS_URL
-        self.redis: Optional[redis.Redis] = None
-        self.default_ttl = 900  # 15 minutes
+        # decode_responses=True automatically converts Redis bytes to Python strings
+        self.redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+        self.ttl = settings.CACHE_TTL_SECONDS
 
-    async def connect(self):
-        """Establish Redis connection if not already connected"""
-        if self.redis is None:
-            self.redis = redis.Redis.from_url(
-                self.redis_url,
-                decode_responses=True,
-                socket_connect_timeout=5,
-                socket_timeout=5
-            )
+    async def get_indicator(self, ioc_value: str) -> Optional[Dict[str, Any]]:
+        """Fetch an indicator from Redis."""
+        data = await self.redis_client.get(f"ioc:{ioc_value}")
+        if data:
+            return json.loads(data)
+        return None
 
-    async def disconnect(self):
-        """Close Redis connection"""
-        if self.redis:
-            await self.redis.close()
-            self.redis = None
+    async def set_indicator(self, ioc_value: str, payload: Dict[str, Any]):
+        """Store an indicator in Redis with a TTL."""
+        await self.redis_client.setex(
+            f"ioc:{ioc_value}",
+            self.ttl,
+            json.dumps(payload)
+        )
 
-    async def get_indicator(self, ioc_value: str) -> Optional[dict]:
-        """Get cached STIX 2.1 payload for an IoC"""
-        await self.connect()
+    async def invalidate_indicator(self, ioc_value: str):
+        """Remove an indicator from the cache (used when score updates)."""
+        await self.redis_client.delete(f"ioc:{ioc_value}")
+
+    async def health_check(self) -> Dict[str, str]:
+        """Ping Redis for health monitoring."""
         try:
-            cached = await self.redis.get(f"ioc:{ioc_value}")
-            if cached:
-                return json.loads(cached)
-            return None
-        except redis.RedisError as e:
-            print(f"Redis get error: {e}")
-            return None
-
-    async def set_indicator(self, ioc_value: str, stix_payload: dict, ttl: int = None) -> bool:
-        """Cache STIX 2.1 payload for an IoC"""
-        await self.connect()
-        try:
-            ttl = ttl or self.default_ttl
-            await self.redis.setex(
-                f"ioc:{ioc_value}",
-                ttl,
-                json.dumps(stix_payload, default=str)
-            )
-            return True
-        except redis.RedisError as e:
-            print(f"Redis set error: {e}")
-            return False
-
-    async def invalidate_indicator(self, ioc_value: str) -> bool:
-        """Invalidate cached entry for an IoC"""
-        await self.connect()
-        try:
-            await self.redis.delete(f"ioc:{ioc_value}")
-            return True
-        except redis.RedisError as e:
-            print(f"Redis delete error: {e}")
-            return False
-
-    async def health_check(self) -> dict:
-        """Check Redis connectivity status"""
-        try:
-            await self.connect()
-            await self.redis.ping()
-            return {"status": "healthy", "latency": "0ms"}
+            await self.redis_client.ping()
+            return {"status": "healthy", "message": "Redis connection successful"}
         except Exception as e:
-            return {"status": "unhealthy", "error": str(e)}
-
+            return {"status": "unhealthy", "message": str(e)}
 
 cache_service = CacheService()
