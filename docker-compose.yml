@@ -1,25 +1,26 @@
+version: '3.8'
+
 services:
   postgres:
-    image: postgres:16-alpine
     container_name: cti_postgres
+    image: postgres:16-alpine
     environment:
-      POSTGRES_USER: cti_user
-      POSTGRES_PASSWORD: cti_local_password_2026
-      POSTGRES_DB: stix_threat_db
+      POSTGRES_USER: cti_admin
+      POSTGRES_PASSWORD: cti_secret_password
+      POSTGRES_DB: threat_intel
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cti_user -d stix_threat_db"]
+      test: ["CMD-SHELL", "pg_isready -U cti_admin -d threat_intel"]
       interval: 5s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
 
   redis:
-    image: redis:7-alpine
     container_name: cti_redis
+    image: redis:7-alpine
     ports:
       - "6379:6379"
     volumes:
@@ -29,7 +30,27 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
+
+  api:
+    container_name: cti_api
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    # Override the default URL to use Docker's internal DNS instead of localhost
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://cti_admin:cti_secret_password@postgres:5432/threat_intel
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    entrypoint: ["./entrypoint.sh"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 volumes:
   postgres_data:

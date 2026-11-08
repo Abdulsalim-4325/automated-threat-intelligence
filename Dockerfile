@@ -27,6 +27,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY ./app ./app
 COPY ./alembic.ini .
 COPY ./alembic ./alembic
+COPY ./entrypoint.sh .
 
 # Change ownership of the app directory to the non-root user
 RUN chown -R appuser:appgroup /app
