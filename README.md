@@ -13,42 +13,16 @@ An enterprise-grade, high-throughput threat intelligence processing and normaliz
 
 ---
 
-## 📐 System Architecture & Design
 
-The platform relies on an asynchronous backend architecture designed to decouple heavy database operations from real-time API request-response cycles.
+## System Architecture
 
-```
-[ OSINT Feeds / Manual Ingestion ] 
-              │
-              ▼
-    ( POST /api/v1/indicators/import )
-              │
-              ▼
-   ┌─────────────────────────────────────┐
-   │     FastAPI Asynchronous Core       │
-   │  - Pydantic v2 Request Validation   │
-   │  - Async SQLAlchemy Session Pool    │
-   └──────────────────┬──────────────────┘
-                      │
-         ┌────────────┴────────────┐
-         ▼                         ▼
-   ┌───────────┐             ┌──────────────┐
-   │   Redis   │             │ PostgreSQL   │
-   │  Caching  │             │ (Neon Cloud) │
-   │   Layer   │             │  JSONB / GIN │
-   └───────────┘             └──────────────┘
-         │                         │
-         └────────────┬────────────┘
-                      ▼
-       ( GET /api/v1/stix/bundle?limit=100 )
-                      │
-                      ▼
-         [ Streamlit Cloud Dashboard ]
-         - Live Metric Telemetry
-         - Interactive IOC Tables
-         - Real-Time Status Monitors
-```
+The platform follows a modular, cloud-native architecture designed
+for asynchronous ingestion, standardized threat intelligence
+normalization, efficient data persistence, and real-time security
+monitoring.
 
+
+<img src="./architecture.png" alt="OSINT Threat Intelligence System Architecture" width="100%" />
 ---
 
 ## 📊 Performance & Latency Benchmarks
