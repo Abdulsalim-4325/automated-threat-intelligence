@@ -1,0 +1,31 @@
+name: Automated Threat Intel CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Build and Start Docker Compose Stack
+      run: |
+        docker compose up --build -d
+        
+    - name: Wait for Application Boot
+      run: |
+        echo "Waiting for PostgreSQL, Redis, and FastAPI to initialize..."
+        sleep 15
+        docker compose ps
+        docker compose logs api
+
+    - name: Run E2E Integration Tests
+      run: |
+        # Execute pytest inside the running API container
+        docker compose exec -T api pytest tests/test_e2e.py -v
