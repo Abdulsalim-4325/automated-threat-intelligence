@@ -3,7 +3,8 @@ from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
-
+import ssl as ssl_module
+from sqlalchemy.ext.asyncio import create_async_engine
 # Import your Base and models so Alembic autogenerates migrations correctly
 from app.core.database import Base
 from app.models.indicator import IndicatorModel
@@ -36,15 +37,24 @@ def do_run_migrations(connection) -> None:
         context.run_migrations()
 
 async def run_async_migrations() -> None:
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
+    # Create a secure SSL context for cloud PostgreSQL (Neon)
+    ssl_context = ssl_module.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl_module.CERT_NONE
+
+    # Get connection string and strip query parameters to avoid driver conflicts
+    url = config.get_main_option("sqlalchemy.url").split("?")[0]
+
+    connectable = create_async_engine(
+        url,
+        connect_args={"ssl": ssl_context},
+        future=True,
     )
+
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
-    await connection.close()
 
+    await connectable.dispose()
 def run_migrations_online() -> None:
     asyncio.run(run_async_migrations())
 
