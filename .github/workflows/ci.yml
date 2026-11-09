@@ -1,18 +1,16 @@
-name: Automated Threat Intel CI
-
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-
-    steps:
+steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
+
+    - name: Create Test Environment Variables
+      run: |
+        cat << EOF > .env
+        POSTGRES_USER=cti_admin
+        POSTGRES_PASSWORD=ci_test_password
+        POSTGRES_DB=threat_intel
+        DATABASE_URL=postgresql+asyncpg://cti_admin:ci_test_password@postgres:5432/threat_intel
+        REDIS_URL=redis://redis:6379/0
+        EOF
 
     - name: Build and Start Docker Compose Stack
       run: |
@@ -27,5 +25,4 @@ jobs:
 
     - name: Run E2E Integration Tests
       run: |
-        # Execute pytest inside the running API container
         docker compose exec -T api pytest tests/test_e2e.py -v
