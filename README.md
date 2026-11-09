@@ -22,7 +22,7 @@ normalization, efficient data persistence, and real-time security
 monitoring.
 
 
-<img src="./architecture.png" alt="OSINT Threat Intelligence System Architecture" width="100%" />
+<img src="mermaid-diagram.png" alt="OSINT Threat Intelligence System Architecture" width="100%" />
 ---
 
 ## 📊 Performance & Latency Benchmarks
